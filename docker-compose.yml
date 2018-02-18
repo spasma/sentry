@@ -1,24 +1,15 @@
-# NOTE: This docker-compose.yml is meant to be just an example of how
-# you could accomplish this on your own. It is not intended to work in
-# all use-cases and must be adapted to fit your needs. This is merely
-# a guideline.
-
-# See docs.getsentry.com/on-premise/server/ for full
-# instructions
-
 version: '2'
+
 services:
   base:
     restart: unless-stopped
     build: .
     environment:
-      # Run `docker-compose run web config generate-secret-key`
-      # to get the SENTRY_SECRET_KEY value.
-      # SENTRY_SECRET_KEY: ''
-      SENTRY_MEMCACHED_HOST: memcached
-      SENTRY_REDIS_HOST: redis
-      SENTRY_POSTGRES_HOST: postgres
-      SENTRY_EMAIL_HOST: smtp
+      - SENTRY_MEMCACHED_HOST: memcached
+      - SENTRY_REDIS_HOST: redis
+      - SENTRY_POSTGRES_HOST: postgres
+      - SENTRY_EMAIL_HOST: smtp
+    env_file: ./env
     volumes:
       - ./data/sentry:/var/lib/sentry/files
 
