@@ -61,3 +61,14 @@ services:
       - postgres
       - memcached
       - smtp
+
+  caddy:
+    build: caddy/.
+    depends_on:
+      - web
+    volumes:
+      - ./data/caddy:/root/.caddy
+    env_file: ./env
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"

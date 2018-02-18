@@ -6,4 +6,5 @@ README.md
 *.pyc
 *.tar
 docker-compose.yml
+caddy/
 data/
