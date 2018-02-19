@@ -9,6 +9,7 @@ services:
       SENTRY_REDIS_HOST: redis
       SENTRY_POSTGRES_HOST: postgres
       SENTRY_EMAIL_HOST: smtp
+      SENTRY_SERVER_EMAIL: sentry@merantix.com
     env_file: ./env
     volumes:
       - ./data/sentry:/var/lib/sentry/files
