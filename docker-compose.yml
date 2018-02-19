@@ -17,6 +17,7 @@ services:
   smtp:
     restart: unless-stopped
     image: tianon/exim4
+    env_file: ./env
 
   memcached:
     restart: unless-stopped
