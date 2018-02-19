@@ -12,7 +12,7 @@ services:
       SENTRY_SERVER_EMAIL: sentry@merantix.com
     env_file: ./env
     volumes:
-      - ./data/sentry:/var/lib/sentry/files
+      - /opt/sentry/data/sentry:/var/lib/sentry/files
 
   smtp:
     restart: unless-stopped
@@ -31,7 +31,7 @@ services:
     restart: unless-stopped
     image: postgres:9.5
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - /opt/sentry/data/postgres:/var/lib/postgresql/data
 
   web:
     restart: unless-stopped
@@ -69,7 +69,7 @@ services:
     depends_on:
       - web
     volumes:
-      - ./data/caddy:/root/.caddy
+      - /opt/sentry/data/caddy:/root/.caddy
     env_file: ./env
     ports:
       - "0.0.0.0:80:80"
