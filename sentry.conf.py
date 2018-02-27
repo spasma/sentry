@@ -255,7 +255,7 @@ SENTRY_WEB_OPTIONS = {
 email = env('SENTRY_EMAIL_HOST') or (env('SMTP_PORT_25_TCP_ADDR') and 'smtp')
 if email:
     SENTRY_OPTIONS['mail.backend'] = 'smtp'
-    SENTRY_OPTIONS['mail.host'] = email
+    SENTRY_OPTIONS['mail.host'] = env('SENTRY_EMAIL_HOST')
     SENTRY_OPTIONS['mail.password'] = env('SENTRY_EMAIL_PASSWORD') or ''
     SENTRY_OPTIONS['mail.username'] = env('SENTRY_EMAIL_USER') or ''
     SENTRY_OPTIONS['mail.port'] = int(env('SENTRY_EMAIL_PORT') or 25)
