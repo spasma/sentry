@@ -42,7 +42,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
-*,cover
+*.cover
 .hypothesis/
 
 # Translations
@@ -65,6 +65,13 @@ target/
 # pyenv
 .python-version
 
+# https://docs.docker.com/compose/extends/
+docker-compose.override.yml
+
+# env config
+.env
+
 *.tar
 data/
 .env
+.vscode/tags
