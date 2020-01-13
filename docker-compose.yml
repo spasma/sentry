@@ -137,6 +137,10 @@ services:
     << : *sentry_defaults
     ports:
       - '9000:9000/tcp'
+    labels:
+      - "traefik.frontend.rule=Host:sentry.varahealthcare.com"
+      - "traefik.port=9000"
+      - "traefik.enable=true"
   cron:
     << : *sentry_defaults
     command: run cron
@@ -155,15 +159,22 @@ services:
       args:
         BASE_IMAGE: 'sentry-onpremise-local'
     command: '"0 0 * * * gosu sentry sentry cleanup --days $SENTRY_EVENT_RETENTION_DAYS"'
-  caddy:
-    build: caddy/.
-    depends_on:
-      - web
-    volumes:
-      - /opt/sentry/data/caddy:/root/.caddy
+  # HTTP/S proxy for TLS
+  reverse-proxy:
+    image: traefik:1.7.9
+    container_name: reverse-proxy
+    # command: --api --docker
+    restart: always
+    labels:
+      - "traefik.domain=Host:sentry.varahealthcare.com"
     ports:
-      - "0.0.0.0:80:80"
-      - "0.0.0.0:443:443"
+      - 80:80
+      - 443:443
+      # - 8080:8080 # The Web UI (enabled by --api)
+    volumes:
+      - ./traefik/traefik.toml:/traefik.toml
+      - ./traefik/acme.json:/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock
 volumes:
   sentry-data:
     external: true
