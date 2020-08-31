@@ -1,28 +1,25 @@
-debug = false
+[log]
+    level = "INFO"
 
-logLevel = "INFO"
-defaultEntryPoints = ["https","http"]
+[accessLog]
 
 [entryPoints]
   [entryPoints.http]
   address = ":80"
-    [entryPoints.http.redirect]
-    entryPoint = "https"
   [entryPoints.https]
   address = ":443"
-  [entryPoints.https.tls]
 
-[retry]
+[providers.docker]
+    endpoint = "unix:///var/run/docker.sock"
+    watch = true
+    exposedByDefault = false
 
-[docker]
-endpoint = "unix:///var/run/docker.sock"
-watch = true
-exposedByDefault = false
+#[api]
+  #dashboard = true
+  #insecure = true
 
-[acme]
-email = "daniel.barreto@merantix.com"
-storage = "acme.json"
-entryPoint = "https"
-onHostRule = true
-[acme.httpChallenge]
-entryPoint = "http"
+[certificatesResolvers.main.acme]
+    email = "daniel.barreto@merantix.com"
+    storage = "acme.json"
+    [certificatesResolvers.main.acme.httpChallenge]
+        entryPoint = "http"
