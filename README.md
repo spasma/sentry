@@ -49,7 +49,7 @@ Sentry comes with a cleanup cron job that prunes events older than `90 days` by 
 
 If you'd like to protect your Sentry install with SSL/TLS, there are
 fantastic SSL/TLS proxies like [HAProxy](http://www.haproxy.org/)
-and [Nginx](http://nginx.org/). You'll likely want to add this service to your `docker-compose.yml` file.
+and [Nginx](http://nginx.org/). Our recommendation is running and external Nginx instance or your choice of load balancer that does the TLS termination and more. Read more over at our [productionalizing self-hosted docs](https://develop.sentry.dev/self-hosted/#productionalizing).
 
 ## Updating Sentry
 
@@ -59,10 +59,10 @@ The included `install.sh` script is meant to be idempotent and to bring you to t
 
 ## Resources
 
- * [Documentation](https://docs.sentry.io/development/server/)
+ * [Documentation](https://develop.sentry.dev/onpremise/)
  * [Bug Tracker](https://github.com/getsentry/onpremise/issues)
  * [Community Forums](https://forum.sentry.io/c/on-premise)
 
 
-[build-status-image]: https://api.travis-ci.com/getsentry/onpremise.svg?branch=master
-[build-status-url]: https://travis-ci.com/getsentry/onpremise
+[build-status-image]: https://github.com/getsentry/onpremise/workflows/test/badge.svg
+[build-status-url]: https://git.io/JUYkh
