@@ -187,7 +187,7 @@ services:
     image: 'nginx:1.16'
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nginx.rule=Host(`sentry.varahealthcare.com`)"
+      - "traefik.http.routers.nginx.rule=Host(`sentry.varahealthcare.com`) || Host(`sentry.vara.ai`)"
       - "traefik.http.routers.nginx.entrypoints=https"
       - "traefik.http.routers.nginx.tls.certResolver=main"
     volumes:
