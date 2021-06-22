@@ -2,7 +2,7 @@ version: "3.4"
 x-restart-policy: &restart_policy
   restart: unless-stopped
 x-sentry-defaults: &sentry_defaults
-  << : *restart_policy
+  <<: *restart_policy
   image: "$SENTRY_IMAGE"
   depends_on:
     - redis
@@ -19,6 +19,7 @@ x-sentry-defaults: &sentry_defaults
     - snuba-replacer
     - symbolicator
     - kafka
+  env_file: ./.env
   entrypoint: "/etc/sentry/entrypoint.sh"
   command: ["run", "web"]
   environment:
@@ -33,7 +34,7 @@ x-sentry-defaults: &sentry_defaults
     - "./sentry:/etc/sentry"
     - "./geoip:/geoip:ro"
 x-snuba-defaults: &snuba_defaults
-  << : *restart_policy
+  <<: *restart_policy
   depends_on:
     - redis
     - clickhouse
@@ -51,13 +52,13 @@ x-snuba-defaults: &snuba_defaults
     SENTRY_EVENT_RETENTION_DAYS:
 services:
   smtp:
-    << : *restart_policy
+    <<: *restart_policy
     image: tianon/exim4
     volumes:
       - "sentry-smtp:/var/spool/exim4"
       - "sentry-smtp-log:/var/log/exim4"
   memcached:
-    << : *restart_policy
+    <<: *restart_policy
     image: "memcached:1.5-alpine"
     healthcheck:
       # From: https://stackoverflow.com/a/31877626/5155484
@@ -67,7 +68,7 @@ services:
       retries: 30
       start_period: 3s
   redis:
-    << : *restart_policy
+    <<: *restart_policy
     image: "redis:5.0-alpine"
     healthcheck:
       test: redis-cli ping
@@ -82,11 +83,11 @@ services:
         soft: 10032
         hard: 10032
   postgres:
-    << : *restart_policy
+    <<: *restart_policy
     image: "postgres:9.6"
     healthcheck:
       # Using default user "postgres" from sentry/sentry.conf.example.py or value of POSTGRES_USER if provided
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 2s
       timeout: 3s
       retries: 30
@@ -102,7 +103,7 @@ services:
         source: ./postgres/
         target: /opt/sentry/
   zookeeper:
-    << : *restart_policy
+    <<: *restart_policy
     image: "confluentinc/cp-zookeeper:5.5.0"
     environment:
       ZOOKEEPER_CLIENT_PORT: "2181"
@@ -120,7 +121,7 @@ services:
       timeout: 5s
       retries: 6
   kafka:
-    << : *restart_policy
+    <<: *restart_policy
     depends_on:
       - zookeeper
     image: "confluentinc/cp-kafka:5.5.0"
@@ -141,12 +142,12 @@ services:
       - "sentry-kafka-log:/var/lib/kafka/log"
       - "sentry-secrets:/etc/kafka/secrets"
     healthcheck:
-      test: [ "CMD-SHELL", 'nc -z localhost 9092' ]
+      test: ["CMD-SHELL", 'nc -z localhost 9092']
       interval: 10s
       timeout: 5s
       retries: 6
   clickhouse:
-    << : *restart_policy
+    <<: *restart_policy
     image: "yandex/clickhouse-server:20.3.9.70"
     ulimits:
       nofile:
@@ -170,31 +171,31 @@ services:
     # Futz with settings so we can keep mmdb and conf in same dir on host
     # (image looks for them in separate dirs by default).
     entrypoint:
-      [ "/usr/bin/geoipupdate", "-d", "/sentry", "-f", "/sentry/GeoIP.conf" ]
+      ["/usr/bin/geoipupdate", "-d", "/sentry", "-f", "/sentry/GeoIP.conf"]
     volumes:
       - "./geoip:/sentry"
   snuba-api:
-    << : *snuba_defaults
+    <<: *snuba_defaults
   # Kafka consumer responsible for feeding events into Clickhouse
   snuba-consumer:
-    << : *snuba_defaults
+    <<: *snuba_defaults
     command: consumer --storage errors --auto-offset-reset=latest --max-batch-time-ms 750
   # Kafka consumer responsible for feeding outcomes into Clickhouse
   # Use --auto-offset-reset=earliest to recover up to 7 days of TSDB data
   # since we did not do a proper migration
   snuba-outcomes-consumer:
-    << : *snuba_defaults
+    <<: *snuba_defaults
     command: consumer --storage outcomes_raw --auto-offset-reset=earliest --max-batch-time-ms 750
   # Kafka consumer responsible for feeding session data into Clickhouse
   snuba-sessions-consumer:
-    << : *snuba_defaults
+    <<: *snuba_defaults
     command: consumer --storage sessions_raw --auto-offset-reset=latest --max-batch-time-ms 750
   # Kafka consumer responsible for feeding transactions data into Clickhouse
   snuba-transactions-consumer:
     <<: *snuba_defaults
     command: consumer --storage transactions --consumer-group transactions_group --auto-offset-reset=latest --max-batch-time-ms 750 --commit-log-topic=snuba-commit-log
   snuba-replacer:
-    << : *snuba_defaults
+    <<: *snuba_defaults
     command: replacer --storage errors --auto-offset-reset=latest --max-batch-size 3
   snuba-subscription-consumer-events:
     <<: *snuba_defaults
@@ -203,7 +204,7 @@ services:
     <<: *snuba_defaults
     command: subscriptions --auto-offset-reset=latest --consumer-group=snuba-transactions-subscriptions-consumers --topic=events --result-topic=transactions-subscription-results --dataset=transactions --commit-log-topic=snuba-commit-log --commit-log-group=transactions_group --delay-seconds=60 --schedule-ttl=60
   snuba-cleanup:
-    << : *snuba_defaults
+    <<: *snuba_defaults
     image: snuba-cleanup-onpremise-local
     build:
       context: ./cron
@@ -219,7 +220,7 @@ services:
         BASE_IMAGE: "$SNUBA_IMAGE"
     command: '"*/5 * * * * gosu snuba snuba cleanup --storage transactions --dry-run False"'
   symbolicator:
-    << : *restart_policy
+    <<: *restart_policy
     image: "$SYMBOLICATOR_IMAGE"
     volumes:
       - "sentry-symbolicator:/data"
@@ -229,7 +230,7 @@ services:
         target: /etc/symbolicator
     command: run -c /etc/symbolicator/config.yml
   symbolicator-cleanup:
-    << : *restart_policy
+    <<: *restart_policy
     image: symbolicator-cleanup-onpremise-local
     build:
       context: ./cron
@@ -239,25 +240,25 @@ services:
     volumes:
       - "sentry-symbolicator:/data"
   web:
-    << : *sentry_defaults
+    <<: *sentry_defaults
   cron:
-    << : *sentry_defaults
+    <<: *sentry_defaults
     command: run cron
   worker:
-    << : *sentry_defaults
+    <<: *sentry_defaults
     command: run worker
   ingest-consumer:
-    << : *sentry_defaults
+    <<: *sentry_defaults
     command: run ingest-consumer --all-consumer-types
   post-process-forwarder:
-    << : *sentry_defaults
+    <<: *sentry_defaults
     # Increase `--commit-batch-size 1` below to deal with high-load environments.
     command: run post-process-forwarder --commit-batch-size 1
   subscription-consumer-events:
     <<: *sentry_defaults
     command: run query-subscription-consumer --commit-batch-size 1 --topic events-subscription-results
-    subscription-consumer-transactions:
-      <<: *sentry_defaults
+  subscription-consumer-transactions:
+    <<: *sentry_defaults
     command: run query-subscription-consumer --commit-batch-size 1 --topic transactions-subscription-results
   sentry-cleanup:
     <<: *sentry_defaults
@@ -269,7 +270,7 @@ services:
     entrypoint: "/entrypoint.sh"
     command: '"0 0 * * * gosu sentry sentry cleanup --days $SENTRY_EVENT_RETENTION_DAYS"'
   nginx:
-    << : *restart_policy
+    <<: *restart_policy
     ports:
       - "$SENTRY_BIND:80/tcp"
     image: "nginx:1.16"
@@ -287,7 +288,7 @@ services:
       - web
       - relay
   relay:
-    << : *restart_policy
+    <<: *restart_policy
     image: "$RELAY_IMAGE"
     volumes:
       - type: bind
