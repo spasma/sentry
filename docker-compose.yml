@@ -234,7 +234,7 @@ services:
       context: ./cron
       args:
         BASE_IMAGE: "$SYMBOLICATOR_IMAGE"
-    command: ""55 23 * * * gosu symbolicator symbolicator cleanup""
+    command: '"55 23 * * * gosu symbolicator symbolicator cleanup"'
     volumes:
       - "sentry-symbolicator:/data"
   web:
