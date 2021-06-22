@@ -3,11 +3,7 @@ x-restart-policy: &restart_policy
   restart: unless-stopped
 x-sentry-defaults: &sentry_defaults
   << : *restart_policy
-  build:
-    context: ./sentry
-    args:
-      - SENTRY_IMAGE
-  image: sentry-onpremise-local
+  image: "$SENTRY_IMAGE"
   depends_on:
     - redis
     - postgres
@@ -23,7 +19,6 @@ x-sentry-defaults: &sentry_defaults
     - snuba-replacer
     - symbolicator
     - kafka
-  env_file: ./.env
   entrypoint: "/etc/sentry/entrypoint.sh"
   command: ["run", "web"]
   environment:
@@ -99,6 +94,7 @@ services:
     command: ["postgres", "-c", "wal_level=logical", "-c", "max_replication_slots=1", "-c", "max_wal_senders=1"]
     environment:
       POSTGRES_HOST_AUTH_METHOD: "trust"
+    entrypoint: /opt/sentry/postgres-entrypoint.sh
     volumes:
       - "sentry-postgres:/var/lib/postgresql/data"
       - type: bind
@@ -118,6 +114,11 @@ services:
       - "sentry-zookeeper:/var/lib/zookeeper/data"
       - "sentry-zookeeper-log:/var/lib/zookeeper/log"
       - "sentry-secrets:/etc/zookeeper/secrets"
+    healthcheck:
+      test: ["CMD-SHELL", 'echo "ruok" | nc -w 2 -q 2 localhost 2181 | grep imok']
+      interval: 10s
+      timeout: 5s
+      retries: 6
   kafka:
     << : *restart_policy
     depends_on:
@@ -159,7 +160,7 @@ services:
         source: ./clickhouse/config.xml
         target: /etc/clickhouse-server/config.d/sentry.xml
     environment:
-      # This limits Clickhouse"s memory to 30% of the host memory
+      # This limits Clickhouse's memory to 30% of the host memory
       # If you have high volume and your search return incomplete results
       # You might want to change this to a higher value (and ensure your host has enough memory)
       MAX_MEMORY_USAGE_RATIO: 0.3
@@ -177,7 +178,7 @@ services:
   # Kafka consumer responsible for feeding events into Clickhouse
   snuba-consumer:
     << : *snuba_defaults
-    command: consumer --storage events --auto-offset-reset=latest --max-batch-time-ms 750
+    command: consumer --storage errors --auto-offset-reset=latest --max-batch-time-ms 750
   # Kafka consumer responsible for feeding outcomes into Clickhouse
   # Use --auto-offset-reset=earliest to recover up to 7 days of TSDB data
   # since we did not do a proper migration
@@ -194,7 +195,7 @@ services:
     command: consumer --storage transactions --consumer-group transactions_group --auto-offset-reset=latest --max-batch-time-ms 750 --commit-log-topic=snuba-commit-log
   snuba-replacer:
     << : *snuba_defaults
-    command: replacer --storage events --auto-offset-reset=latest --max-batch-size 3
+    command: replacer --storage errors --auto-offset-reset=latest --max-batch-size 3
   snuba-subscription-consumer-events:
     <<: *snuba_defaults
     command: subscriptions --auto-offset-reset=latest --consumer-group=snuba-events-subscriptions-consumers --topic=events --result-topic=events-subscription-results --dataset=events --commit-log-topic=snuba-commit-log --commit-log-group=snuba-consumers --delay-seconds=60 --schedule-ttl=60
@@ -257,6 +258,7 @@ services:
     command: run query-subscription-consumer --commit-batch-size 1 --topic events-subscription-results
     subscription-consumer-transactions:
       <<: *sentry_defaults
+    command: run query-subscription-consumer --commit-batch-size 1 --topic transactions-subscription-results
   sentry-cleanup:
     <<: *sentry_defaults
     image: sentry-cleanup-onpremise-local
